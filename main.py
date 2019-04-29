@@ -4,11 +4,16 @@ from __future__ import unicode_literals
 import json
 
 import requests
-from requests_html import HTMLSession
+from bs4 import BeautifulSoup
 from xbmcswift2 import Plugin
 
 
 plugin = Plugin()
+session = requests.Session()
+session.headers.update(
+    {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) \
+        AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 \
+            Safari/537.36'})
 
 
 @plugin.route('/')
@@ -36,10 +41,10 @@ def live(page):
 
 @plugin.route('/category/live/<room_id>')
 def live_play(room_id):
-    session = HTMLSession()
     resp = session.get('https://live.bilibili.com/{}'.format(room_id))
-    room_info = json.loads(resp.html.xpath(
-        '//div[@class="script-requirement"]/script[1]/text()')[0][31:])
+    soup = BeautifulSoup(resp.content)
+    room_info = json.loads(soup.find_all(
+        'div', class_='script-requirement').script[0].text[0][31:])
     play_urls = room_info['playUrlRes']['data']['durl']
     plugin.set_resolved_url(play_urls[0]['url'])
 
