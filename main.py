@@ -20,26 +20,43 @@ session.headers.update(
 def index():
     items = [{
         'label': '直播',
-        'path': plugin.url_for('live')
+        'path': plugin.url_for('live', page=1)
     }]
     return items
 
 
-@plugin.route('/category/live')
-def live():
-    url = 'https://api.live.bilibili.com/room/v3/area/getRoomList?platform=web&parent_area_id=1&cate_id=0&area_id=33&sort_type=income&page=1&page_size=43&tag_version=1'
+@plugin.route('/category/live/<page>/')
+def live(page):
+    items = []
+    if int(page) > 1:
+        items.append({
+            'label': '上一页',
+            'path': plugin.url_for('live', page=int(page)-1)
+        })
+        page_size = 42
+    else:
+        page_size = 43
+
+    url = 'https://api.live.bilibili.com/room/v3/area/getRoomList?platform=web\
+&parent_area_id=1&cate_id=0&area_id=33&sort_type=income&page={}\
+&page_size={}&tag_version=1'.format(page, page_size)
     resp = requests.get(url)
     data = resp.json()
-    return [{
+
+    items.extend([{
         'label': detail['title'],
         'path': plugin.url_for('live_play', detail=json.dumps(detail)),
         'thumbnail': detail['user_cover'],
         'icon': detail['user_cover'],
-        # 'is_playable': True,
-    } for detail in data['data']['list']]
+    } for detail in data['data']['list']])
+    items.append({
+        'label': '下一页',
+        'path': plugin.url_for('live', page=int(page)+1)
+    })
+    return items
 
 
-@plugin.route('/category/live/<detail>')
+@plugin.route('/category/live/detail/<detail>/')
 def live_play(detail):
     detail = json.loads(detail)
     resp = session.get('https://live.bilibili.com/{}'.format(detail['roomid']))
