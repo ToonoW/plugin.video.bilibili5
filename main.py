@@ -48,6 +48,16 @@ def sub_categories(parent_id):
             'label': html_a.text,
             'path': plugin.url_for('lives', parent_id=parent_id, area_id=params['areaId'][0], page=1)
         })
+    for html_li in soup.find_all('li'):
+        cover_style = html_li.div.a.find('div', class_='cover')['style']
+        items.append({
+            'label': html_li.div.a.find('div', class_='info').text,
+            'thumbnail': cover_style[cover_style.index('(')+1:cover_style.index(')')],
+            'path': plugin.url_for('live_play', detail=json.dumps({
+                'roomid': html_li.div.a['href'][1:],
+                'title': html_li.div.a.find('div', class_='info').text,
+            }))
+        })
     return items
 
 
