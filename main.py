@@ -26,7 +26,6 @@ resource_conf.read(os.path.join(addon_dir, 'conf', 'resource.ini'))
 @plugin.route('/')
 def index():
     items = list()
-    plugin.log.info(resource_conf.sections())
     for area_name in resource_conf.options('ParentArea'):
         items.append({
             'label': area_name,
@@ -40,10 +39,10 @@ def sub_categories(parent_id):
     items = list()
     url = 'https://live.bilibili.com/p/eden/area-tags?parentAreaId={}&areaId=0'.format(parent_id)
     resp = session.get(url)
-    soup = BeautifulSoup(resp.content)
+    soup = BeautifulSoup(resp.content, "html.parser")
     html_as = soup.find('header', class_='header').section.find_all('a')
     for html_a in html_as:
-        params = urlparse.parse_qs(urlparse.urlsplit(url).query)
+        params = urlparse.parse_qs(urlparse.urlsplit(html_a['href']).query)
         items.append({
             'label': html_a.text,
             'path': plugin.url_for('lives', parent_id=parent_id, area_id=params['areaId'][0], page=1)
@@ -100,8 +99,7 @@ def lives(parent_id, area_id, page):
 def live_play(detail):
     detail = json.loads(detail)
     resp = session.get('https://live.bilibili.com/{}'.format(detail['roomid']))
-    plugin.log.info(resp.content)
-    soup = BeautifulSoup(resp.text)
+    soup = BeautifulSoup(resp.content, "html.parser")
     room_info = json.loads(soup.find_all(
         'div', class_='script-requirement')[0].script.text[31:])
     play_infos = room_info['playUrlRes']['data']['durl']
