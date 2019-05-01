@@ -25,7 +25,7 @@ def index():
     return items
 
 
-@plugin.route('/category/live/<page>/')
+@plugin.route('/live/category/<page>/')
 def live(page):
     items = []
     if int(page) > 1:
@@ -33,7 +33,11 @@ def live(page):
             'label': '上一页',
             'path': plugin.url_for('live', page=int(page)-1)
         })
-        page_size = 42
+        items.append({
+            'label': '首页',
+            'path': plugin.url_for('live', page=1)
+        })
+        page_size = 41
     else:
         page_size = 43
 
@@ -56,7 +60,7 @@ def live(page):
     return items
 
 
-@plugin.route('/category/live/detail/<detail>/')
+@plugin.route('/live/category/detail/<detail>/')
 def live_play(detail):
     detail = json.loads(detail)
     resp = session.get('https://live.bilibili.com/{}'.format(detail['roomid']))
