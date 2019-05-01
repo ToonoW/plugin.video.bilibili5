@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.video.bilibili5" version="1.0.0" name="bilibili5" provider-name="toono5">
+<addon id="plugin.video.bilibililive" version="1.0.0" name="哔哩哔哩live" provider-name="toono5">
   <requires>
     <import addon="xbmc.python" version="2.25.0"/>
     <import addon="script.module.requests" />
@@ -14,6 +14,5 @@
       <icon>icon.png</icon>
       <fanart>fanart.png</fanart>
     </assets>
-    <news>Updated with latest artwork metadata</news>
   </extension>
 </addon>
