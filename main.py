@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import os
 import json
+import urlparse
+import ConfigParser
 
 import requests
 from bs4 import BeautifulSoup
-from xbmcswift2 import Plugin
+from xbmcswift2 import Plugin, xbmc
 
 
 plugin = Plugin()
@@ -15,35 +18,58 @@ session.headers.update(
         AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 \
             Safari/537.36'})
 
+addon_dir = xbmc.translatePath('special://home/addons/{}'.format(plugin.id))
+resource_conf = ConfigParser.ConfigParser()
+resource_conf.read(os.path.join(addon_dir, 'conf', 'resource.ini'))
+
 
 @plugin.route('/')
 def index():
-    items = [{
-        'label': '直播',
-        'path': plugin.url_for('live', page=1)
-    }]
+    items = list()
+    plugin.log.info(resource_conf.sections())
+    for area_name in resource_conf.options('ParentArea'):
+        items.append({
+            'label': area_name,
+            'path': plugin.url_for('sub_categories', parent_id=resource_conf.get('ParentArea', area_name))
+        })
     return items
 
 
-@plugin.route('/live/category/<page>/')
-def live(page):
+@plugin.route('/live/category/<parent_id>')
+def sub_categories(parent_id):
+    items = list()
+    url = 'https://live.bilibili.com/p/eden/area-tags?parentAreaId={}&areaId=0'.format(parent_id)
+    resp = session.get(url)
+    soup = BeautifulSoup(resp.content)
+    html_as = soup.find('header', class_='header').section.find_all('a')
+    for html_a in html_as:
+        params = urlparse.parse_qs(urlparse.urlsplit(url).query)
+        items.append({
+            'label': html_a.text,
+            'path': plugin.url_for('lives', parent_id=parent_id, area_id=params['areaId'][0], page=1)
+        })
+    return items
+
+
+@plugin.route('/live/category/<parent_id>/<area_id>/<page>/')
+def lives(parent_id, area_id, page):
     items = []
     if int(page) > 1:
         items.append({
             'label': '上一页',
-            'path': plugin.url_for('live', page=int(page)-1)
+            'path': plugin.url_for('lives', parent_id=parent_id, area_id=area_id, page=int(page)-1)
         })
         items.append({
             'label': '首页',
-            'path': plugin.url_for('live', page=1)
+            'path': plugin.url_for('lives', parent_id=parent_id, area_id=area_id, page=1)
         })
         page_size = 41
     else:
         page_size = 43
 
     url = 'https://api.live.bilibili.com/room/v3/area/getRoomList?platform=web\
-&parent_area_id=1&cate_id=0&area_id=33&sort_type=income&page={}\
-&page_size={}&tag_version=1'.format(page, page_size)
+&parent_area_id={}&cate_id=0&area_id={}&sort_type=income&page={}\
+&page_size={}&tag_version=1'.format(parent_id, area_id, page, page_size)
     resp = requests.get(url)
     data = resp.json()
 
@@ -55,7 +81,7 @@ def live(page):
     } for detail in data['data']['list']])
     items.append({
         'label': '下一页',
-        'path': plugin.url_for('live', page=int(page)+1)
+        'path': plugin.url_for('lives', parent_id=parent_id, area_id=area_id, page=int(page)+1)
     })
     return items
 
