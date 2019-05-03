@@ -14,5 +14,8 @@
       <icon>icon.png</icon>
       <fanart>fanart.png</fanart>
     </assets>
+    <summary lang="zh">bilibili直播插件</summary>
+    <description lang="zh">直播来源：www.bilibili.com</description>
+    <source>https://github.com/ToonoW/plugin.video.bilibililive</source>
   </extension>
 </addon>
